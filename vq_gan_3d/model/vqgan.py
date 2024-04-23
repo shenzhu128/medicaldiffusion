@@ -46,6 +46,16 @@ def vanilla_d_loss(logits_real, logits_fake):
 class VQGAN(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
+
+        # Important: This property activates manual optimization.
+        # Because we're using multiple optimizers
+        # Things to handle manually:
+        # 1. gradient accumulation (cfg.model.accumulate_grad_batches)
+        # 2. gradient clipping (cfg.model.gradient_clip_val)
+        # 3. optimizer.zero_grad()
+        self.automatic_optimization = False
+        self.validation_step_outputs = []
+
         self.cfg = cfg
         self.embedding_dim = cfg.model.embedding_dim
         self.n_codes = cfg.model.n_codes
@@ -166,24 +176,83 @@ class VQGAN(pl.LightningModule):
             gan_feat_loss = disc_factor * self.gan_feat_weight * \
                 (image_gan_feat_loss + video_gan_feat_loss)
 
-            self.log("train/g_image_loss", g_image_loss,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/g_video_loss", g_video_loss,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/image_gan_feat_loss", image_gan_feat_loss,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/video_gan_feat_loss", video_gan_feat_loss,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/perceptual_loss", perceptual_loss,
-                     prog_bar=True, logger=True, on_step=True, on_epoch=True)
-            self.log("train/recon_loss", recon_loss, prog_bar=True,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/aeloss", aeloss, prog_bar=True,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/commitment_loss", vq_output['commitment_loss'],
-                     prog_bar=True, logger=True, on_step=True, on_epoch=True)
-            self.log('train/perplexity', vq_output['perplexity'],
-                     prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            self.log(
+                "train/g_image_loss",
+                g_image_loss,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/g_video_loss",
+                g_video_loss,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/image_gan_feat_loss",
+                image_gan_feat_loss,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/video_gan_feat_loss",
+                video_gan_feat_loss,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/perceptual_loss",
+                perceptual_loss,
+                prog_bar=True,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/recon_loss",
+                recon_loss,
+                prog_bar=True,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/aeloss",
+                aeloss,
+                prog_bar=True,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/commitment_loss",
+                vq_output["commitment_loss"],
+                prog_bar=True,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/perplexity",
+                vq_output["perplexity"],
+                prog_bar=True,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
             return recon_loss, x_recon, vq_output, aeloss, perceptual_loss, gan_feat_loss
 
         if optimizer_idx == 1:
@@ -203,46 +272,130 @@ class VQGAN(pl.LightningModule):
                 (self.image_gan_weight*d_image_loss +
                  self.video_gan_weight*d_video_loss)
 
-            self.log("train/logits_image_real", logits_image_real.mean().detach(),
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/logits_image_fake", logits_image_fake.mean().detach(),
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/logits_video_real", logits_video_real.mean().detach(),
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/logits_video_fake", logits_video_fake.mean().detach(),
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/d_image_loss", d_image_loss,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/d_video_loss", d_video_loss,
-                     logger=True, on_step=True, on_epoch=True)
-            self.log("train/discloss", discloss, prog_bar=True,
-                     logger=True, on_step=True, on_epoch=True)
+            self.log(
+                "train/logits_image_real",
+                logits_image_real.mean().detach(),
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/logits_image_fake",
+                logits_image_fake.mean().detach(),
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/logits_video_real",
+                logits_video_real.mean().detach(),
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/logits_video_fake",
+                logits_video_fake.mean().detach(),
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/d_image_loss",
+                d_image_loss,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/d_video_loss",
+                d_video_loss,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
+            self.log(
+                "train/discloss",
+                discloss,
+                prog_bar=True,
+                logger=True,
+                on_step=True,
+                on_epoch=True,
+                sync_dist=True,
+            )
             return discloss
 
         perceptual_loss = self.perceptual_model(
             frames, frames_recon) * self.perceptual_weight
         return recon_loss, x_recon, vq_output, perceptual_loss
 
-    def training_step(self, batch, batch_idx, optimizer_idx):
+    def training_step(self, batch, batch_idx, dataloader_idx=0):
         x = batch['data']
+        num_of_optimizers = 2
+        optimizer_idx = batch_idx % num_of_optimizers
+        self
+        opt_ae, opt_dics = self.optimizers()
+
         if optimizer_idx == 0:
             recon_loss, _, vq_output, aeloss, perceptual_loss, gan_feat_loss = self.forward(
                 x, optimizer_idx)
             commitment_loss = vq_output['commitment_loss']
             loss = recon_loss + commitment_loss + aeloss + perceptual_loss + gan_feat_loss
+            loss = loss / self.cfg.model.accumulate_grad_batches
+            self.manual_backward(loss)
+            opt_ae_num_of_step = batch_idx // num_of_optimizers
+            if (opt_ae_num_of_step + 1) % self.cfg.model.accumulate_grad_batches == 0:
+                self.clip_gradients(
+                    opt_ae,
+                    gradient_clip_val=self.cfg.model.gradient_clip_val,
+                    gradient_clip_algorithm="norm",
+                )
+                opt_ae.step()
+                opt_ae.zero_grad()
         if optimizer_idx == 1:
             discloss = self.forward(x, optimizer_idx)
             loss = discloss
+            loss = loss / self.cfg.model.accumulate_grad_batches
+            self.manual_backward(loss)
+            opt_disc_num_of_step = batch_idx // num_of_optimizers
+            if (opt_disc_num_of_step + 1) % self.cfg.model.accumulate_grad_batches == 0:
+                self.clip_gradients(
+                    opt_dics,
+                    gradient_clip_val=self.cfg.model.gradient_clip_val,
+                    gradient_clip_algorithm="norm",
+                )
+                opt_dics.step()
+                opt_dics.zero_grad()
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
         x = batch['data']  # TODO: batch['stft']
         recon_loss, _, vq_output, perceptual_loss = self.forward(x)
-        self.log('val/recon_loss', recon_loss, prog_bar=True)
-        self.log('val/perceptual_loss', perceptual_loss, prog_bar=True)
-        self.log('val/perplexity', vq_output['perplexity'], prog_bar=True)
-        self.log('val/commitment_loss',
-                 vq_output['commitment_loss'], prog_bar=True)
+        self.validation_step_outputs.append([recon_loss, vq_output, perceptual_loss])
+        return recon_loss, vq_output, perceptual_loss
+
+    def on_validation_batch_end(self, batch, batch_idx, dataloader_idx=0):
+        recon_loss, vq_output, perceptual_loss = self.validation_step_outputs[-1]
+        self.log("val/recon_loss", recon_loss, prog_bar=True, sync_dist=True)
+        self.log(
+            "val/perceptual_loss", perceptual_loss.mean(), prog_bar=True, sync_dist=True
+        )
+        self.log(
+            "val/perplexity", vq_output["perplexity"], prog_bar=True, sync_dist=True
+        )
+        self.log(
+            "val/commitment_loss",
+            vq_output["commitment_loss"],
+            prog_bar=True,
+            sync_dist=True,
+        )
+        self.validation_step_outputs.clear()
 
     def configure_optimizers(self):
         lr = self.cfg.model.lr
@@ -264,8 +417,8 @@ class VQGAN(pl.LightningModule):
         frames, frames_rec, _, _ = self(x, log_image=True)
         log["inputs"] = frames
         log["reconstructions"] = frames_rec
-        #log['mean_org'] = batch['mean_org']
-        #log['std_org'] = batch['std_org']
+        # log['mean_org'] = batch['mean_org']
+        # log['std_org'] = batch['std_org']
         return log
 
     def log_videos(self, batch, **kwargs):
@@ -274,8 +427,8 @@ class VQGAN(pl.LightningModule):
         _, _, x, x_rec = self(x, log_image=True)
         log["inputs"] = x
         log["reconstructions"] = x_rec
-        #log['mean_org'] = batch['mean_org']
-        #log['std_org'] = batch['std_org']
+        # log['mean_org'] = batch['mean_org']
+        # log['std_org'] = batch['std_org']
         return log
 
 

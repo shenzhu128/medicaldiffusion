@@ -7,7 +7,7 @@ from PIL import Image
 import torch
 import torchvision
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.utilities.distributed import rank_zero_only
+from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 from vq_gan_3d.utils import save_video_grid
 
@@ -28,10 +28,10 @@ class ImageLogger(Callback):
                   global_step, current_epoch, batch_idx):
         root = os.path.join(save_dir, "images", split)
         # print(root)
-        #mean = images.pop('mean_org')
-        #mean = mean[(None,)*3].swapaxes(0, -1)
-        #std = images.pop('std_org')
-        #std = std[(None,)*3].swapaxes(0, -1)
+        # mean = images.pop('mean_org')
+        # mean = mean[(None,)*3].swapaxes(0, -1)
+        # std = images.pop('std_org')
+        # std = std[(None,)*3].swapaxes(0, -1)
         for k in images:
             images[k] = (images[k] + 1.0) * 127.5  # std + mean
             torch.clamp(images[k], 0, 255)
@@ -84,10 +84,10 @@ class ImageLogger(Callback):
             return True
         return False
 
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         self.log_img(pl_module, batch, batch_idx, split="train")
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         self.log_img(pl_module, batch, batch_idx, split="val")
 
 

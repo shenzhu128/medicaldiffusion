@@ -1,4 +1,12 @@
-from dataset import MRNetDataset, BRATSDataset, ADNIDataset, DUKEDataset, LIDCDataset, DEFAULTDataset
+from dataset import (
+    MRNetDataset,
+    BRATSDataset,
+    ADNIDataset,
+    DUKEDataset,
+    LIDCDataset,
+    DEFAULTDataset,
+    CombinedBrainDataset,
+)
 from torch.utils.data import WeightedRandomSampler
 
 
@@ -37,6 +45,13 @@ def get_dataset(cfg):
             root_dir=cfg.dataset.root_dir, augmentation=True)
         val_dataset = LIDCDataset(
             root_dir=cfg.dataset.root_dir, augmentation=True)
+        sampler = None
+        return train_dataset, val_dataset, sampler
+    if cfg.dataset.name == "COMBINED_BRAIN":
+        train_dataset = CombinedBrainDataset(
+            root_dir=cfg.dataset.root_dir, type="train"
+        )
+        val_dataset = CombinedBrainDataset(root_dir=cfg.dataset.root_dir, type="val")
         sampler = None
         return train_dataset, val_dataset, sampler
     if cfg.dataset.name == 'DEFAULT':
