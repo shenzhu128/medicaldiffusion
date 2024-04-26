@@ -6,3 +6,4 @@ from dataset.duke import DUKEDataset
 from dataset.lidc import LIDCDataset
 from dataset.default import DEFAULTDataset
 from dataset.combined_brain import CombinedBrainDataset
+from dataset.combined_brain_17mm import CombinedBrainDataset17mm

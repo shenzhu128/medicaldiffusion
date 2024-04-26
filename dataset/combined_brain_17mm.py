@@ -21,7 +21,7 @@ def scale_to_minusone_one(data):
     return ((data - orig_min) / (orig_max - orig_min)) * 2 - 1
 
 
-def get_data_path_1mm(base_path, dataset_name, subj_id, session_id, run_id):
+def get_data_path_17mm(base_path, dataset_name, subj_id, session_id, run_id):
     # deal with empty session_id and run_id
     if session_id == "EMPTY":
         session_id = ""
@@ -36,7 +36,7 @@ def get_data_path_1mm(base_path, dataset_name, subj_id, session_id, run_id):
             subj_id,
             session_id,
             run_id,
-            "1mm_interpolated/1mm_t1w_brain.nii.gz",
+            "acpc-align_1.7mm_interpolated/acpc_1.7mm_t1w_brain.nii.gz",
         )
     elif dataset_name == "abide1":
         return os.path.join(
@@ -46,7 +46,7 @@ def get_data_path_1mm(base_path, dataset_name, subj_id, session_id, run_id):
             subj_id,
             session_id,
             run_id,
-            "acpc-align_1mm_interpolated/acpc_1mm_t1w_brain.nii.gz",
+            "acpc-align_1.7mm_interpolated/acpc_1.7mm_t1w_brain.nii.gz",
         )
     elif dataset_name == "abide2":
         return os.path.join(
@@ -56,7 +56,7 @@ def get_data_path_1mm(base_path, dataset_name, subj_id, session_id, run_id):
             subj_id,
             session_id,
             run_id,
-            "acpc-align_1mm_interpolated/acpc_1mm_t1w_brain.nii.gz",
+            "acpc-align_1.7mm_interpolated/acpc_1.7mm_t1w_brain.nii.gz",
         )
     elif dataset_name == "oasis3":
         return os.path.join(
@@ -66,22 +66,25 @@ def get_data_path_1mm(base_path, dataset_name, subj_id, session_id, run_id):
             subj_id,
             session_id,
             run_id,
-            "acpc-align_1mm_interpolated/acpc_1mm_t1w_brain.nii.gz",
+            "acpc-align_1.7mm_interpolated/acpc_1.7mm_t1w_brain.nii.gz",
         )
     else:
         raise ValueError("Unknown dataset name: %s" % dataset_name)
 
 
-class CombinedBrainDataset(Dataset):
+class CombinedBrainDataset17mm(Dataset):
     def __init__(
         self,
         root_dir,
         type="train",
         return_name=False,
-        output_size=(176, 208, 180),
+        output_size=(128, 128, 128),
     ):
-        spilt_path = "/home/sz9jt/projects/mr-inr/notebooks/data/t1w_brain/splits/t1w_split_1_seed_1201135291.csv"
-        split_df = pd.read_csv(spilt_path, comment="#", index_col=None)
+        # split_path = "/home/sz9jt/projects/mr-inr/notebooks/data/t1w_brain/splits/t1w_split_1_seed_1201135291.csv"
+        split_path = "/home/sz9jt/projects/mr-inr/notebooks/data/t1w_brain/splits/t1w_split_1_seed_1201135291_with_shapes_17mm.csv"
+        split_df = pd.read_csv(split_path, comment="#", index_col=None)
+        split_df = split_df[split_df["x_size"] > 0]
+
         self.root_dir = root_dir
         self.type = type
         self.return_name = return_name
@@ -104,7 +107,7 @@ class CombinedBrainDataset(Dataset):
         self.data_paths = []
         cols = ["dataset_name", "subj_id", "session_id", "run_id"]
         for i in range(len(split_df)):
-            path = get_data_path_1mm(self.root_dir, *split_df[cols].iloc[i])
+            path = get_data_path_17mm(self.root_dir, *split_df[cols].iloc[i])
             self.data_paths.append(path)
         assert len(self.data_paths) == len(split_df)
 

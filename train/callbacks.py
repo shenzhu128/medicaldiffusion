@@ -8,6 +8,7 @@ import torch
 import torchvision
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
+import matplotlib.pyplot as plt
 
 from vq_gan_3d.utils import save_video_grid
 
@@ -27,27 +28,23 @@ class ImageLogger(Callback):
     def log_local(self, save_dir, split, images,
                   global_step, current_epoch, batch_idx):
         root = os.path.join(save_dir, "images", split)
-        # print(root)
-        # mean = images.pop('mean_org')
-        # mean = mean[(None,)*3].swapaxes(0, -1)
-        # std = images.pop('std_org')
-        # std = std[(None,)*3].swapaxes(0, -1)
-        for k in images:
-            images[k] = (images[k] + 1.0) * 127.5  # std + mean
-            torch.clamp(images[k], 0, 255)
-            grid = torchvision.utils.make_grid(images[k], nrow=4)
-            grid = grid
-            grid = grid.transpose(0, 1).transpose(1, 2).squeeze(-1)
-            grid = grid.numpy()
-            grid = (grid).astype(np.uint8)
-            filename = "{}_gs-{:06}_e-{:06}_b-{:06}.png".format(
-                k,
-                global_step,
-                current_epoch,
-                batch_idx)
-            path = os.path.join(root, filename)
-            os.makedirs(os.path.split(path)[0], exist_ok=True)
-            Image.fromarray(grid).save(path)
+        num_row = len(images.keys())
+        num_col = images["inputs"].shape[0]
+        fig, axes = plt.subplots(num_row, num_col)
+        filename = "{:06}_e-{:06}_b-{:06}.png".format(
+            global_step, current_epoch, batch_idx
+        )
+
+        img_keys = list(images.keys())
+        for i in range(num_row):
+            for j in range(num_col):
+                axes[i, j].imshow(images[img_keys[i]][j, 0], cmap="gray")
+                axes[i, j].axis("off")
+
+        path = os.path.join(root, filename)
+        os.makedirs(os.path.split(path)[0], exist_ok=True)
+        # Image.fromarray(grid).save(path)
+        plt.savefig(path, bbox_inches="tight")
 
     def log_img(self, pl_module, batch, batch_idx, split="train"):
         if (self.check_frequency(batch_idx) and  # batch_idx % self.batch_freq == 0

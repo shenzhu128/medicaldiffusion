@@ -44,8 +44,7 @@ def run(cfg: DictConfig):
                      save_top_k=-1, filename='{epoch}-{step}-{train/recon_loss:.2f}'))
     callbacks.append(ModelCheckpoint(every_n_train_steps=10000, save_top_k=-1,
                      filename='{epoch}-{step}-10000-{train/recon_loss:.2f}'))
-    callbacks.append(ImageLogger(
-        batch_frequency=750, max_images=4, clamp=True))
+    callbacks.append(ImageLogger(batch_frequency=750, max_images=4, clamp=True))
     # callbacks.append(VideoLogger(
     #     batch_frequency=1500, max_videos=4, clamp=True))
 

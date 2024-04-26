@@ -6,6 +6,7 @@ from dataset import (
     LIDCDataset,
     DEFAULTDataset,
     CombinedBrainDataset,
+    CombinedBrainDataset17mm,
 )
 from torch.utils.data import WeightedRandomSampler
 
@@ -52,6 +53,15 @@ def get_dataset(cfg):
             root_dir=cfg.dataset.root_dir, type="train"
         )
         val_dataset = CombinedBrainDataset(root_dir=cfg.dataset.root_dir, type="val")
+        sampler = None
+        return train_dataset, val_dataset, sampler
+    if cfg.dataset.name == "COMBINED_BRAIN_17MM":
+        train_dataset = CombinedBrainDataset17mm(
+            root_dir=cfg.dataset.root_dir, type="train"
+        )
+        val_dataset = CombinedBrainDataset17mm(
+            root_dir=cfg.dataset.root_dir, type="val"
+        )
         sampler = None
         return train_dataset, val_dataset, sampler
     if cfg.dataset.name == 'DEFAULT':

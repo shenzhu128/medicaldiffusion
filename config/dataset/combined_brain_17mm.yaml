@@ -1,0 +1,3 @@
+name: COMBINED_BRAIN_17MM
+root_dir: /home/sz9jt/data/t1w_processed/outputs/
+image_channels: 1

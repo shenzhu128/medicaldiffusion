@@ -1,9 +1,9 @@
-PL_TORCH_DISTRIBUTED_BACKEND=gloo \
+PL_TORCH_DISTRIBUTED_BACKEND=nccl \
 /scratch/sz9jt/.conda/envs/medicaldiffusion/bin/python train_vqgan.py \
-dataset=combined_brain \
+dataset=combined_brain_17mm \
 dataset.root_dir=/home/sz9jt/data/t1w_processed/outputs/ \
 model=vq_gan_3d \
-model.gpus=2 \
+model.gpus=4 \
 model.precision=16-mixed \
 model.embedding_dim=6 \
 model.n_hiddens=16 \
@@ -16,6 +16,6 @@ model.perceptual_weight=4 \
 model.image_gan_weight=1 \
 model.video_gan_weight=1 \
 model.gan_feat_weight=4 \
-model.batch_size=2 \
-model.n_codes=15000 \
+model.batch_size=5 \
+model.n_codes=16384 \
 model.accumulate_grad_batches=1 
