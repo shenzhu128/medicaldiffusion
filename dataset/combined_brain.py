@@ -132,11 +132,10 @@ class CombinedBrainDataset(Dataset):
         pad6 = (self.output_size[0] - img.shape[0]) - pad5
 
         imgout = torch.from_numpy(img).float()
-        imgout = scale_to_minusone_one(imgout)
         imgout = F.pad(
             imgout, (pad1, pad2, pad3, pad4, pad5, pad6), mode="constant", value=0.0
         )
-        # imgout = scale_to_minusone_one(imgout)
+        imgout = scale_to_minusone_one(imgout)
         imgout = torch.unsqueeze(imgout, 0)
 
         if self.return_name:
