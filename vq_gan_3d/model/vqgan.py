@@ -43,6 +43,29 @@ def vanilla_d_loss(logits_real, logits_fake):
     return d_loss
 
 
+def module_param_grad_dict(module: torch.nn.Module) -> dict[str, torch.Tensor]:
+    grad_dict = dict()
+    for name, p in module.named_parameters():
+        if p.requires_grad:
+            if torch.is_tensor(p.grad):
+                grad_dict[name] = p.grad.clone()
+            else:
+                grad_dict[name] = p.grad
+    return grad_dict
+
+
+def overwrite_module_param_grads(
+    module: torch.nn.Module, grad_dict: dict[str, torch.Tensor]
+) -> torch.nn.Module:
+    for name, p in module.named_parameters():
+        if p.requires_grad:
+            if torch.is_tensor(p.grad) and torch.is_tensor(grad_dict[name]):
+                p.grad.copy_(grad_dict[name], non_blocking=False)
+            else:
+                p.grad = grad_dict[name]
+    return module
+
+
 class VQGAN(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
@@ -339,7 +362,6 @@ class VQGAN(pl.LightningModule):
         x = batch['data']
         num_of_optimizers = 2
         optimizer_idx = batch_idx % num_of_optimizers
-        self
         opt_ae, opt_dics = self.optimizers()
 
         if optimizer_idx == 0:
@@ -348,7 +370,16 @@ class VQGAN(pl.LightningModule):
             commitment_loss = vq_output['commitment_loss']
             loss = recon_loss + commitment_loss + aeloss + perceptual_loss + gan_feat_loss
             loss = loss / self.cfg.model.accumulate_grad_batches
+
+            # Save disc grad here
+            # So the grad from optmizer 0 won't interfere with grad from optimizer 1
+            img_disc_grad = module_param_grad_dict(self.image_discriminator)
+            video_disc_grad = module_param_grad_dict(self.video_discriminator)
             self.manual_backward(loss)
+            # Restore disc grad here (overwrite)
+            overwrite_module_param_grads(self.image_discriminator, img_disc_grad)
+            overwrite_module_param_grads(self.video_discriminator, video_disc_grad)
+
             opt_ae_num_of_step = batch_idx // num_of_optimizers
             if (opt_ae_num_of_step + 1) % self.cfg.model.accumulate_grad_batches == 0:
                 self.clip_gradients(
