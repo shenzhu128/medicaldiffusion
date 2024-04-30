@@ -27,7 +27,7 @@ class ImageLogger(Callback):
     @rank_zero_only
     def log_local(self, save_dir, split, images,
                   global_step, current_epoch, batch_idx):
-        root = os.path.join(save_dir, "images", split)
+        root = os.path.join(save_dir, "images-w-corrected-gan-loss", split)
         num_row = len(images.keys())
         num_col = images["inputs"].shape[0]
         fig, axes = plt.subplots(num_row, num_col)
